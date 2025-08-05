@@ -1,13 +1,12 @@
 from django.shortcuts import render, HttpResponse
-import random
 from .models import Post
 
 
 def home(request):
-    return render(request, "base.html")
+    return render(request, "home.html")
 
 def test_view(request):
-    return HttpResponse("World hello!")
+    return render(request, "test.html")
 
 def post_list_view(request):
     posts = Post.objects.all()
