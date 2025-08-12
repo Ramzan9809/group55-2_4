@@ -17,7 +17,7 @@ class Post(models.Model):
     title = models.CharField(max_length=256)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True)
     tags = models.ManyToManyField(Tag)
-    img = models.ImageField(upload_to='media/', null=True)
+    img = models.ImageField(upload_to='posts_images/', null=True, blank=True)
     content = models.CharField(max_length=256, null=True)
     rate = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True, null=True)

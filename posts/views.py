@@ -10,7 +10,7 @@ def test_view(request):
 
 def post_list_view(request):
     posts = Post.objects.all()
-    return render(request, "post_list.html", context={"posts": posts})
+    return render(request, "posts/post_list.html", context={"posts": posts})
     
 def post_detail(request, post_id):
     posts = Post.objects.get(id=post_id)
