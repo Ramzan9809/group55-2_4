@@ -19,8 +19,16 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
 from posts.views import home, post_list_view, test_view, post_detail, post_create_view, post_create_model_form_view
+from user.views import register_view, login_view
 
-urlpatterns = [
+
+users_patterns = [
+    path('register/', register_view, name='register'),
+    path('login/', login_view, name='login'),
+
+]
+
+posts_patterns = [
     path('', home),
     path('admin/', admin.site.urls),
     path('test/', test_view),
@@ -33,5 +41,4 @@ urlpatterns = [
 # + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns = static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
