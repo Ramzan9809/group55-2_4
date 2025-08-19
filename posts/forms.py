@@ -1,5 +1,5 @@
 from django import forms
-from .models import Post
+from .models import Post, Comment
 
 
 class PostForm(forms.Form):
@@ -43,3 +43,12 @@ class PostModelForm(forms.ModelForm):
         if title and content and title.lower() == content.lower():
             raise forms.ValidationError("Title and content should be different")
         return cleaned_data
+    
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ["content"]
+        widgets = {
+            "content": forms.Textarea(attrs={"rows": 3, "placeholder": "Напишите комментарий..."})
+        }

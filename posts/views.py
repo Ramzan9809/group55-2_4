@@ -1,6 +1,6 @@
-from django.shortcuts import render, HttpResponse, redirect
+from django.shortcuts import render, HttpResponse, redirect, get_object_or_404
 from .models import Post
-from .forms import PostForm, PostModelForm
+from .forms import PostForm, PostModelForm, CommentForm
 
 
 def home(request):
@@ -13,9 +13,30 @@ def post_list_view(request):
     posts = Post.objects.all()
     return render(request, "posts/post_list.html", context={"posts": posts})
     
+
 def post_detail(request, post_id):
-    posts = Post.objects.get(id=post_id)
-    return render(request, "posts/post_detail.html", context={"posts": posts})
+    post = get_object_or_404(Post, id=post_id)
+    comments = post.comments.all().order_by("-created_at")
+
+    if request.method == "POST":
+        if request.user.is_authenticated:
+            form = CommentForm(request.POST)
+            if form.is_valid():
+                comment = form.save(commit=False)
+                comment.post = post
+                comment.author = request.user
+                comment.save()
+                return redirect("post_detail", post_id=post.id)
+        else:
+            return redirect("login")
+    else:
+        form = CommentForm()
+
+    return render(request, "posts/post_detail.html", {
+        "post": post,
+        "comments": comments,
+        "form": form,
+    })
 
 def post_create_view(request):
     if request.method == "GET":

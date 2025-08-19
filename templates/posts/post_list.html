@@ -24,7 +24,7 @@
 
         </div>
         <div class="card-footer bg-white border-top-0">
-          <a href="/posts/{{post.id}}" class="btn btn-primary w-100">Подробнее</a>
+          <a href="{% url 'post_detail' post.id %}" class="btn btn-primary w-100">Подробнее</a>
         </div>
       </div>
     </div>
