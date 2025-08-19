@@ -34,6 +34,7 @@ posts_patterns = [
     path("posts/", post_list_view, name="post_list"),
     path("posts/<int:post_id>/", post_detail, name="post_detail"),
     path("posts/create/", post_create_view, name="post_create"),
+    path("posts/create_model_form/", post_create_model_form_view, name="post_create_model_form"),
 ]
 
 urlpatterns = users_patterns + posts_patterns + static(

@@ -1,5 +1,5 @@
 from django import forms
-from .models import Post, Comment
+from .models import Post, Comment, Category, Tag
 
 
 class PostForm(forms.Form):
@@ -52,3 +52,24 @@ class CommentForm(forms.ModelForm):
         widgets = {
             "content": forms.Textarea(attrs={"rows": 3, "placeholder": "Напишите комментарий..."})
         }
+
+class SearchForm(forms.Form):
+    q = forms.CharField(max_length=256,required=False,label="Search",
+                        widget=forms.TextInput(attrs={"class": "form-control"}))
+    category_id = forms.ModelChoiceField(required=False,queryset=Category.objects.all(),label="Category",
+                        widget=forms.Select(attrs={"class": "form-select"}))
+    tag = forms.ModelMultipleChoiceField(required=False,queryset=Tag.objects.all(),label="Tag",
+                        widget=forms.SelectMultiple(attrs={"class": "form-select", "size": 5 }))
+    orderings = (
+        ("created_at", "По дате создания"),
+        ("title", "По названию"),
+        ("-created_at", "По дате создания (убывание)"),
+        ("-title", "По названию (убывание)"),
+        ("updated_at", "По дате обновления"),
+        ("-updated_at", "По дате обновления (убывание)"),
+        ("rate", "По рейтингу"),
+        ("-rate", "По рейтингу (убывание)"),
+        ("None", "Без сортировки"),
+    )
+    ordering = forms.ChoiceField(choices=orderings, required=False, label="Сортировка",
+                                  widget=forms.Select(attrs={"class": "form-select"}))
