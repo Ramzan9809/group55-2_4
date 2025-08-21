@@ -36,7 +36,7 @@ def post_list_view(request):
         start = (page - 1) * limit
         end = start * limit
         posts = posts[start:end]
-    return render(request, "posts/post_list.html", context={"posts": posts, "form": form, "max_page": max_page +1 })
+    return render(request, "posts/post_list.html", context={"posts": posts, "form": form, "max_page": range(1, max_page + 1)})  
 
 
 @login_required(login_url="/login")

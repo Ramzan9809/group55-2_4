@@ -49,10 +49,10 @@
 </div>
 
 <div>
-  {% for i in max_page %}
+ {% for i in max_page %}
     <a href="/posts/?page={{ i }}">
-        {{ 1 }}
+        {{ i }}
     </a>
-  {% endfor %}
+{% endfor %}
 </div>
 {% endblock %}
