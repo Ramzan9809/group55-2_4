@@ -1,6 +1,6 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404, HttpResponse
 from .models import Post
-from .forms import PostForm, PostModelForm, CommentForm, SearchForm
+from .forms import PostForm, PostModelForm, CommentForm, SearchForm, PostUpdateForm
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 
@@ -12,7 +12,7 @@ def home(request):
 @login_required(login_url="/login")
 def post_list_view(request):
     limit = 3
-    posts = Post.objects.all()
+    posts = Post.objects.exclude(author=request.user)
     form = SearchForm(request.GET or None)
     q = request.GET.get("q")
     category_id = request.GET.get("category_id")
@@ -67,19 +67,23 @@ def post_detail(request, post_id):
 
 @login_required(login_url="/login")
 def post_create_view(request):
-    if request.method == "GET":
-        form = PostForm()
-        return render(request, "posts/post_create.html", context={"form": form})
     if request.method == "POST":
         form = PostForm(request.POST, request.FILES)
-        if not form.is_valid():
-            return render(request, "posts/post_create.html", context={"form": form})
-        else:
+        if form.is_valid():
             title = form.cleaned_data.get("title")
             content = form.cleaned_data.get("content")
             img = form.cleaned_data.get("img")
-            Post.objects.create(title=title, content=content, img=img)
-    return redirect("/posts")
+            Post.objects.create(
+                title=title,
+                content=content,
+                img=img,
+                author=request.user 
+            )
+            return redirect("/posts")
+    else:
+        form = PostForm()
+    return render(request, "posts/post_create.html", {"form": form})
+
 
 
 @login_required(login_url="/login")
@@ -87,9 +91,19 @@ def post_create_model_form_view(request):
     if request.method == 'POST':
         form = PostModelForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
-            return redirect('/posts')  
+            post = form.save(commit=False)
+            post.author = request.user ``
+            post.save()
+            return redirect('/posts')
     else:
         form = PostModelForm()
     return render(request, 'posts/post_create_model_form.html', {'form': form})
 
+
+def post_update(request, post_id):
+    post = Post.objects.filter(id=post_id).first()
+    if not post:
+        return HttpResponse("idk")
+    if request.method == "GET":
+        form = PostUpdateForm()
+    return render(request, 'posts/post_update.html', context={"form": form})

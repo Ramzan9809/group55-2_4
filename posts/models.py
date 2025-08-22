@@ -14,6 +14,7 @@ class Tag(models.Model):
         return self.name
 
 class Post(models.Model):
+    author = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     title = models.CharField(max_length=256)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True)
     tags = models.ManyToManyField(Tag)

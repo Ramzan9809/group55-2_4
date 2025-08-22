@@ -73,3 +73,7 @@ class SearchForm(forms.Form):
     )
     ordering = forms.ChoiceField(choices=orderings, required=False, label="Сортировка",
                                   widget=forms.Select(attrs={"class": "form-select"}))
+    
+
+class PostUpdateForm(forms.Form):
+    pass
