@@ -13,11 +13,12 @@ class Tag(models.Model):
     def __str__(self):
         return self.name
 
+
 class Post(models.Model):
-    author = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="posts", null=True)
     title = models.CharField(max_length=256)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True)
-    tags = models.ManyToManyField(Tag)
+    tags = models.ManyToManyField(Tag, blank=True)
     img = models.ImageField(upload_to='posts_images/', null=True, blank=True)
     content = models.CharField(max_length=256, null=True)
     rate = models.IntegerField(default=0)

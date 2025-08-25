@@ -1,109 +1,98 @@
-from django.shortcuts import render, redirect, get_object_or_404, HttpResponse
-from .models import Post
-from .forms import PostForm, PostModelForm, CommentForm, SearchForm, PostUpdateForm
-from django.contrib.auth.decorators import login_required
+from django.views.generic import TemplateView, ListView, DetailView, CreateView
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
+from django.urls import reverse_lazy
+
+from .models import Post
+from .forms import PostForm, PostModelForm, CommentForm, SearchForm
 
 
-def home(request):
-    return render(request, "home.html")
+class HomeView(TemplateView):
+    template_name = "home.html"
 
 
-@login_required(login_url="/login")
-def post_list_view(request):
-    limit = 3
-    posts = Post.objects.exclude(author=request.user)
-    form = SearchForm(request.GET or None)
-    q = request.GET.get("q")
-    category_id = request.GET.get("category_id")
-    tag = request.GET.getlist("tag")
-    ordering = request.GET.get("orderings")
-    page = int(request.GET.get("page", 1))
-    if q:
-        posts = posts.filter(Q(title__icontains=q) | Q(content__icontains=q))
-    if category_id:
-        posts = posts.filter(category_id=category_id)
-    if tag:
-        posts = posts.filter(tags__in=tag).distinct()
-    if ordering:
-        posts = posts.order_by(ordering)
-    if page:
-        max_page = len(posts) / limit
-        if round(max_page) < max_page:
-            max_page = round(max_page) + 1
-        else:
-            max_page = round(max_page)
-        start = (page - 1) * limit
-        end = start * limit
-        posts = posts[start:end]
-    return render(request, "posts/post_list.html", context={"posts": posts, "form": form, "max_page": range(1, max_page + 1)})  
+class PostListView(LoginRequiredMixin, ListView):
+    model = Post
+    template_name = "posts/post_list.html"
+    context_object_name = "posts"
+    login_url = "/login"
+    paginate_by = 3  # вместо самописного кода пагинации
+
+    def get_queryset(self):
+        qs = Post.objects.exclude(author=self.request.user)
+        q = self.request.GET.get("q")
+        category_id = self.request.GET.get("category_id")
+        tag = self.request.GET.getlist("tag")
+        ordering = self.request.GET.get("orderings")
+
+        if q:
+            qs = qs.filter(Q(title__icontains=q) | Q(content__icontains=q))
+        if category_id:
+            qs = qs.filter(category_id=category_id)
+        if tag:
+            qs = qs.filter(tags__in=tag).distinct()
+        if ordering:
+            qs = qs.order_by(ordering)
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["form"] = SearchForm(self.request.GET or None)
+        return context
 
 
-@login_required(login_url="/login")
-def post_detail(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
-    comments = post.comments.all().order_by("-created_at")
+class PostDetailView(LoginRequiredMixin, DetailView):
+    model = Post
+    template_name = "posts/post_detail.html"
+    context_object_name = "post"
+    login_url = "/login"
 
-    if request.method == "POST":
-        if request.user.is_authenticated:
-            form = CommentForm(request.POST)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        post = self.get_object()
+        comments = post.comments.all().order_by("-created_at")
+
+        if self.request.method == "POST":
+            form = CommentForm(self.request.POST)
             if form.is_valid():
                 comment = form.save(commit=False)
                 comment.post = post
-                comment.author = request.user
+                comment.author = self.request.user
                 comment.save()
-                return redirect("post_detail", post_id=post.id)
+                return redirect("post_detail", pk=post.id)
         else:
-            return redirect("login")
-    else:
-        form = CommentForm()
+            form = CommentForm()
 
-    return render(request, "posts/post_detail.html", {
-        "post": post,
-        "comments": comments,
-        "form": form,
-    })
+        context["comments"] = comments
+        context["form"] = form
+        return context
 
 
-@login_required(login_url="/login")
-def post_create_view(request):
-    if request.method == "POST":
-        form = PostForm(request.POST, request.FILES)
-        if form.is_valid():
-            title = form.cleaned_data.get("title")
-            content = form.cleaned_data.get("content")
-            img = form.cleaned_data.get("img")
-            Post.objects.create(
-                title=title,
-                content=content,
-                img=img,
-                author=request.user 
-            )
-            return redirect("/posts")
-    else:
-        form = PostForm()
-    return render(request, "posts/post_create.html", {"form": form})
+class PostCreateView(LoginRequiredMixin, CreateView):
+    model = Post
+    form_class = PostForm
+    template_name = "posts/post_create.html"
+    success_url = reverse_lazy("post_list")
+    login_url = "/login"
+
+    def form_valid(self, form):
+        post = form.save(commit=False)
+        post.author = self.request.user
+        post.save()
+        return super().form_valid(form)
 
 
+class PostCreateModelFormView(LoginRequiredMixin, CreateView):
+    model = Post
+    form_class = PostModelForm
+    template_name = "posts/post_create_model_form.html"
+    success_url = reverse_lazy("post_list")
+    login_url = "/login"
 
-@login_required(login_url="/login")
-def post_create_model_form_view(request):
-    if request.method == 'POST':
-        form = PostModelForm(request.POST, request.FILES)
-        if form.is_valid():
-            post = form.save(commit=False)
-            post.author = request.user ``
-            post.save()
-            return redirect('/posts')
-    else:
-        form = PostModelForm()
-    return render(request, 'posts/post_create_model_form.html', {'form': form})
-
-
-def post_update(request, post_id):
-    post = Post.objects.filter(id=post_id).first()
-    if not post:
-        return HttpResponse("idk")
-    if request.method == "GET":
-        form = PostUpdateForm()
-    return render(request, 'posts/post_update.html', context={"form": form})
+    def form_valid(self, form):
+        post = form.save(commit=False)
+        post.author = self.request.user
+        post.save()
+        return super().form_valid(form)

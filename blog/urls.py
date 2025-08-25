@@ -2,26 +2,32 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
-from posts.views import home, post_list_view, post_detail, post_create_view, post_create_model_form_view
-from user.views import register_view, login_view, logout_view, profile_view
 
-users_patterns = [
-    path("register/", register_view, name="register"),
-    path("login/", login_view, name="login"),
-    path("logout/", logout_view, name="logout"),
-    path("profile/", profile_view, name="profile"),  # 👈 без username
-]
+# Users CBV
+from user.views import RegisterView, LoginView, LogoutView, ProfileView, PostUpdateView
 
-posts_patterns = [
-    path("", home, name="home"),
-    path("i18n/", include("django.conf.urls.i18n")),
+# Posts CBV
+from posts.views import HomeView, PostListView, PostDetailView, PostCreateView, PostCreateModelFormView
+
+urlpatterns = [
+    # Users
+    path("register/", RegisterView.as_view(), name="register"),
+    path("login/", LoginView.as_view(), name="login"),
+    path("logout/", LogoutView.as_view(), name="logout"),
+    path("profile/", ProfileView.as_view(), name="profile"),
+    path("posts/<int:pk>/update/", PostUpdateView.as_view(), name="post_update"),
+
+    # Posts
+    path("", HomeView.as_view(), name="home"),
+    path("posts/", PostListView.as_view(), name="post_list"),
+    path("posts/create/", PostCreateView.as_view(), name="post_create"),
+    path("posts/create_model_form/", PostCreateModelFormView.as_view(), name="post_create_model_form"),
+    path("posts/<int:pk>/", PostDetailView.as_view(), name="post_detail"),
+
+    # Admin & i18n
     path("admin/", admin.site.urls),
-    path("posts/", post_list_view, name="post_list"),
-    path("posts/<int:post_id>/", post_detail, name="post_detail"),
-    path("posts/create/", post_create_view, name="post_create"),
-    path("posts/create_model_form/", post_create_model_form_view, name="post_create_model_form"),
+    path("i18n/", include("django.conf.urls.i18n")),
 ]
 
-urlpatterns = users_patterns + posts_patterns + static(
-    settings.MEDIA_URL, document_root=settings.MEDIA_ROOT
-)
+# Статика и медиа
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
